@@ -13,6 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
+
 class ChangeUserPasswordSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=100)
 

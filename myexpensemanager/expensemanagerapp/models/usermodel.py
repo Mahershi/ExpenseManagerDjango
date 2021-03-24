@@ -5,17 +5,25 @@ from django.utils import timezone
 from ..manager import CustomUserManager
 
 
-
-
-
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
-    uname = models.CharField(max_length=10, unique=True)
+    email = models.EmailField(
+        unique=True,
+        error_messages={
+            'unique': "Account with Email ID already exists"
+        }
+    )
+    uname = models.CharField(
+        max_length=10,
+        unique=True,
+        error_messages={
+            'unique': "Username Already Taken"
+        }
+    )
     name = models.CharField(max_length=30)
     date_joined = models.DateTimeField(default=timezone.now)
     password = models.CharField(max_length=100)
-    fcm_token = models.CharField(max_length=100, default="")
-    image_url = models.CharField(max_length=100, default="")
+    fcm_token = models.CharField(max_length=100, default="", blank=True)
+    image_url = models.CharField(max_length=100, default="", blank=True)
     is_superuser = models.BooleanField(default=False)
 
     is_staff = models.BooleanField(default=False)

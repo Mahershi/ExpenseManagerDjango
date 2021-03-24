@@ -18,6 +18,24 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        user = User.objects.get_by_natural_key(serializer.validated_data.get('uname'))
+        token, created = Token.objects.get_or_create(user=user)
+        print(token.key)
+        return Response(
+            {
+                "success": "true",
+                "data": {
+                    'auth_token': token.key,
+                    'user': serializer.data
+                }
+            }
+        )
+
     def partial_update(self, request: Request, *args, **kwargs):
         request.data.pop('password')
         print(str(request.data))
