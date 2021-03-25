@@ -20,11 +20,12 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 
         clusterId = creat_res.data.get('cluster')
         print("Cluster:" + str(clusterId))
-        qs: QuerySet= Cluster.objects.all()
-        cluster: Cluster = qs.filter(id__exact=clusterId).get()
-        print(type(cluster))
-        cluster.expenses = cluster.expenses + 1
-        cluster.save()
+        if(clusterId is not None):
+            qs: QuerySet= Cluster.objects.all()
+            cluster: Cluster = qs.filter(id__exact=clusterId).get()
+            print(type(cluster))
+            cluster.expenses = cluster.expenses + 1
+            cluster.save()
 
         return Response(
             {
@@ -49,7 +50,8 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         if (qp.get('user_id') is not None):
             self.queryset = self.queryset.filter(user_id__exact=qp.get('user_id'))
 
-        self.queryset = self.queryset.order_by('-expense_date')
+        # self.queryset = self.queryset.order_by('-expense_date', '-id', )
+        self.queryset = self.queryset.order_by('-expense_date',)
         return Response(
             {
                 "success": "true",

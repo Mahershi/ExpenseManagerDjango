@@ -27,3 +27,21 @@ class ClusterViewSet(viewsets.ModelViewSet):
                 "data": self.get_serializer(self.queryset, many=True).data
             }
         )
+
+    def partial_update(self, request, *args, **kwargs):
+        resp_data: Response = super(ClusterViewSet, self).partial_update(request, *args, **kwargs)
+        return Response(
+            {
+                "success": "true",
+                "data": resp_data.data
+            }
+        )
+
+    def create(self, request, *args, **kwargs):
+        resp_data: Response = super(ClusterViewSet, self).create(request, *args, **kwargs)
+        return Response(
+            {
+                "success": "true",
+                "data": resp_data.data
+            }
+        )
