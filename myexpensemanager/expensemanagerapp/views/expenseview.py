@@ -1,11 +1,13 @@
 from rest_framework import viewsets
-from ..models import Expense
-from ..serializers import ExpenseSerializer
+from ..models import Expense, Cluster
+from ..serializers import ExpenseSerializer, ClusterSerializer
 from django.db.models import QuerySet
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request, QueryDict
+from django.utils import timezone
+
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -13,9 +15,31 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseSerializer
     permission_classes = [AllowAny]
 
+    def create(self, request, *args, **kwargs):
+        creat_res: Response = super(ExpenseViewSet, self).create(request, *args, **kwargs)
+
+        clusterId = creat_res.data.get('cluster')
+        print("Cluster:" + str(clusterId))
+        qs: QuerySet= Cluster.objects.all()
+        cluster: Cluster = qs.filter(id__exact=clusterId).get()
+        print(type(cluster))
+        cluster.expenses = cluster.expenses + 1
+        cluster.save()
+
+        return Response(
+            {
+                "success": "true",
+                "data": creat_res.data
+            }
+        )
+
     def list(self, request, *args, **kwargs):
         qp: QueryDict = request.query_params
         print(request.query_params)
+
+        if (qp.get('cluster') is not None):
+            self.queryset = self.queryset.filter(cluster_id__exact=qp.get('cluster'))
+
         if (qp.get('start') is not None):
             self.queryset = self.queryset.filter(expense_date__range=[qp.get('start'), qp.get('end')])
 
@@ -118,6 +142,76 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             }
         )
 
+    @action(detail=False, methods=['POST'])
+    def change_cluster(self, request: Request, pk=None):
+        data = request.data
+        try:
+            new_cluster_id = data.get('new_cluster_id')
+            old_cluster_id = data.get('old_cluster_id')
+            expense_id = data.get('expense_id')
+
+            if old_cluster_id != 0:
+                old_cluster: Cluster = Cluster.objects.all().filter(id__exact=old_cluster_id).get()
+                if old_cluster.expenses > 0:
+                    old_cluster.expenses = old_cluster.expenses - 1
+                old_cluster.save()
+            new_cluster: Cluster = Cluster.objects.all().filter(id__exact=new_cluster_id).get()
+            expense: Expense = Expense.objects.all().filter(id__exact=expense_id).get()
+
+            expense.cluster = new_cluster
+
+            new_cluster.expenses = new_cluster.expenses + 1
+            new_cluster.last_added = timezone.now()
+            new_cluster.save()
+
+            expense.save()
+
+            return Response(
+                {
+                    "success": "true",
+                    "message": "Cluster Changed"
+                }
+            )
+
+        except:
+            return Response(
+                {
+                    "success": "false",
+                    "error": "Error Changing Cluster"
+                }
+            )
+
+    @action(detail=False, methods=['POST'])
+    def remove_cluster(self, request: Request, pk=None):
+        data = request.data
+        try:
+            expense_id = data.get('expense_id')
+            expense: Expense = Expense.objects.all().filter(id__exact=expense_id).get()
+
+            expense.cluster = None
+
+            old_cluster_id = data.get('cluster_id')
+            old_cluster: Cluster = Cluster.objects.all().filter(id__exact=old_cluster_id).get()
+            if old_cluster.expenses > 0:
+                old_cluster.expenses = old_cluster.expenses - 1
+
+            old_cluster.save()
+            expense.save()
+
+            return Response(
+                {
+                    "success": "true",
+                    "message": "Removed from Cluster"
+                }
+            )
+
+        except:
+            return Response(
+                {
+                    "success": "false",
+                    "error": "Error Removing from Cluster"
+                }
+            )
 
 
 
