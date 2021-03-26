@@ -16,23 +16,38 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
-        creat_res: Response = super(ExpenseViewSet, self).create(request, *args, **kwargs)
-
-        clusterId = creat_res.data.get('cluster')
+        clusterId = request.data.get('cluster')
         print("Cluster:" + str(clusterId))
-        if(clusterId is not None):
-            qs: QuerySet= Cluster.objects.all()
-            cluster: Cluster = qs.filter(id__exact=clusterId).get()
-            print(type(cluster))
-            cluster.expenses = cluster.expenses + 1
-            cluster.save()
 
-        return Response(
-            {
-                "success": "true",
-                "data": creat_res.data
-            }
-        )
+        try:
+            if clusterId is not None:
+                qs: QuerySet = Cluster.objects.all()
+                cluster: Cluster = qs.filter(id__exact=clusterId).get()
+                print(type(cluster))
+                cluster.expenses = cluster.expenses + 1
+                cluster.last_added = timezone.now()
+                cluster.save()
+
+            creat_res: Response = super(ExpenseViewSet, self).create(request, *args, **kwargs)
+
+            # clusterId = creat_res.data.get('cluster')
+
+
+            return Response(
+                {
+                    "success": "true",
+                    "data": creat_res.data,
+                    "message": "Expense Added"
+                }
+            )
+        except:
+            return Response(
+                {
+                    "success": "false",
+                    "error": "Error Adding Expense"
+                }
+            )
+
 
     def list(self, request, *args, **kwargs):
         qp: QueryDict = request.query_params
@@ -55,17 +70,23 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "success": "true",
-                "data": self.get_serializer(self.queryset, many=True).data
+                "data": self.get_serializer(self.queryset, many=True).data,
+                "message": "Expenses Fetched"
             }
         )
 
 
     def partial_update(self, request, *args, **kwargs):
+        print(str(request.data))
+        clusterId = request.data.pop('cluster')
+        print("removed cluster: " + str(clusterId))
+        print(str(request.data))
         resp_updated = super(ExpenseViewSet, self).partial_update(request, *args, **kwargs)
         return Response(
             {
                 "success": "true",
-                "data": resp_updated.data
+                "data": resp_updated.data,
+                "message": "Expense Updated"
             }
         )
 
@@ -94,7 +115,8 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                         'oldest_month': date_oldest[5:7],
                         'latest_year': date_latest[0:4],
                         'oldest_year': date_oldest[0:4]
-                    }
+                    },
+                    "message": "Fetched Date Span"
                 }
             )
         except:
@@ -104,7 +126,8 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                     "data": {
                         'oldest_month': 1,
                         'oldest_year': 2020
-                    }
+                    },
+                    "error": "Default Date Span"
                 }
             )
 
@@ -215,5 +238,25 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 }
             )
 
+
+    def destroy(self, request, *args, **kwargs):
+        instance: Expense = self.get_object()
+        print(instance.pk)
+        cluster: Cluster = instance.cluster
+
+        if cluster is not None:
+            print(cluster.pk)
+            if cluster.expenses > 0:
+                cluster.expenses = cluster.expenses - 1
+            cluster.save()
+
+        resp = super(ExpenseViewSet, self).destroy(request, *args, *kwargs)
+
+        return Response(
+            {
+                "success": "true",
+                "message": "Expense Deleted"
+            }
+        )
 
 

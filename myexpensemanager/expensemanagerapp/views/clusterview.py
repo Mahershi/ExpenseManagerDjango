@@ -13,6 +13,15 @@ class ClusterViewSet(viewsets.ModelViewSet):
     serializer_class = ClusterSerializer
     permission_classes = [AllowAny]
 
+    def destroy(self, request, *args, **kwargs):
+        resp = super(ClusterViewSet, self).destroy(request, *args, **kwargs)
+        return Response(
+            {
+                "success": "true",
+                "message": "Cluster Deleted"
+            }
+        )
+
     def list(self, request, *args, **kwargs):
         qp: QueryDict = request.query_params
         print(request.query_params)
@@ -24,7 +33,8 @@ class ClusterViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "success": "true",
-                "data": self.get_serializer(self.queryset, many=True).data
+                "data": self.get_serializer(self.queryset, many=True).data,
+                "message": "Clusters Fetched"
             }
         )
 
@@ -33,7 +43,8 @@ class ClusterViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "success": "true",
-                "data": resp_data.data
+                "data": resp_data.data,
+                "message": "Cluster Updated"
             }
         )
 
@@ -42,6 +53,7 @@ class ClusterViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "success": "true",
-                "data": resp_data.data
+                "data": resp_data.data,
+                "message": "Cluster Created"
             }
         )
