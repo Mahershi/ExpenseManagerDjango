@@ -88,10 +88,10 @@ WSGI_APPLICATION = 'myexpensemanager.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'mahershi',
-        'HOST': '127.0.0.1',
+        'NAME': 'd3orn0if6uqo7i',
+        'USER': 'lpxnrgpsnxujbe',
+        'PASSWORD': '186553b83703345e728e70da621dad6ff1f89cec4f2683c005f32ea0dd55575b',
+        'HOST': 'ec2-52-71-161-140.compute-1.amazonaws.com',
         'PORT': '5432'
     }
 }
